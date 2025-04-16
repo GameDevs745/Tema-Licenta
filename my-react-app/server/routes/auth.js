@@ -1,27 +1,23 @@
-// routes/auth.js
 const express = require('express');
 const router = express.Router();
-const passport = require('passport');
 const User = require('../models/user');
-const jwt = require('../config/jwt');
 
-
-router.post('/signup', async (req, res) => {
-  const { username, email, password } = req.body;
-  const user = new User({ username, email, password });
+router.post('/authenticate', async (req, res) => {
   try {
-    await user.save();
-    res.json({ message: 'User created successfully' });
-  } catch (err) {
-    res.status(400).json({ message: 'Error creating user' });
+    const { username, password } = req.body;
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(401).send({ error: 'Invalid username or password' });
+    }
+    const isValidPassword = await user.comparePassword(password);
+    if (!isValidPassword) {
+      return res.status(401).send({ error: 'Invalid username or password' });
+    }
+    const token = await user.generateToken();
+    res.send({ token });
+  } catch (error) {
+    res.status(500).send({ error: 'Internal Server Error' });
   }
 });
 
-router.post('/login', passport.authenticate('local', { failureRedirect: '/login' }), (req, res) => {
-  res.json({ message: 'User logged in successfully' });
-});
-
-router.get('/protected', jwt.verifyToken, (req, res) => {
-  res.json({ message: 'Hello, authenticated user!' });
-});
 module.exports = router;

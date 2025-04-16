@@ -1,0 +1,14 @@
+const geolib = require('geolib');
+
+const matchFilter = {
+  filterMatches: (userLocation, matches) => {
+    const filteredMatches = matches.filter((match) => {
+      const matchLocation = match.user2.location;
+      const distance = geolib.getDistance(userLocation, matchLocation);
+      return distance <= 50; // filter matches within 50km
+    });
+    return filteredMatches;
+  }
+};
+
+module.exports = matchFilter;
